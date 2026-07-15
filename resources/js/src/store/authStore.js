@@ -1,0 +1,21 @@
+import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
+
+export const useAuthStore = create(
+    persist(
+        (set) => ({
+            user: null,
+            token: null,
+            setAuth: (user, token) => {
+                localStorage.setItem('token', token);
+                set({ user, token });
+            },
+            setUser: (user) => set({ user }),
+            clearAuth: () => {
+                localStorage.removeItem('token');
+                set({ user: null, token: null });
+            },
+        }),
+        { name: 'auth-storage', partialize: (s) => ({ token: s.token }) }
+    )
+);
