@@ -12,7 +12,7 @@ WORKDIR /var/www
 COPY . .
 
 RUN composer install --no-dev --optimize-autoloader --no-scripts && \
-    composer dump-autoload --optimize
+    composer dump-autoload --optimize --no-scripts
 
 EXPOSE 8000
 
