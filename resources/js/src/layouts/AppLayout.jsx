@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 import { useThemeStore } from '../store/themeStore';
@@ -18,48 +18,50 @@ const icons = {
     default:             '◈',
 };
 
-/* ── Accordion parent item ── */
 function AccordionMenu({ item }) {
     const [open, setOpen] = useState(false);
     const icon = icons[item.slug] ?? icons.default;
-
     return (
         <div>
-            <button onClick={() => setOpen(o => !o)} className="nav-item" style={{
+            <button onClick={() => setOpen(o => !o)} style={{
                 display: 'flex', alignItems: 'center', width: '100%',
                 gap: '10px', justifyContent: 'space-between',
-            }}>
+                padding: '8px 10px', borderRadius: '8px', border: 'none',
+                background: 'transparent', cursor: 'pointer',
+                color: 'var(--sidebar-text)', fontSize: '0.875rem', fontWeight: 500,
+                transition: 'background 0.18s',
+            }}
+                onMouseEnter={e => e.currentTarget.style.background = 'var(--sidebar-hover)'}
+                onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+            >
                 <span style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0 }}>
-                    <span style={{ fontSize: '1rem', width: '20px', textAlign: 'center', flexShrink: 0 }}>{icon}</span>
-                    <span style={{ truncate: true, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.name}</span>
+                    <span style={{ width: '20px', textAlign: 'center', flexShrink: 0, fontSize: '1rem' }}>{icon}</span>
+                    <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.name}</span>
                 </span>
                 <span style={{
-                    fontSize: '0.55rem',
-                    opacity: 0.5,
-                    flexShrink: 0,
-                    transition: 'transform 0.25s ease',
+                    fontSize: '0.55rem', opacity: 0.45, flexShrink: 0,
+                    display: 'inline-block', transition: 'transform 0.25s ease',
                     transform: open ? 'rotate(180deg)' : 'rotate(0deg)',
-                    display: 'inline-block',
                 }}>▼</span>
             </button>
-
             <div style={{
                 display: 'grid',
                 gridTemplateRows: open ? '1fr' : '0fr',
                 transition: 'grid-template-rows 0.28s cubic-bezier(.4,0,.2,1)',
             }}>
                 <div style={{ overflow: 'hidden' }}>
-                    <div style={{
-                        marginLeft: '30px',
-                        marginTop: '2px',
-                        marginBottom: '4px',
-                        paddingLeft: '12px',
-                        borderLeft: '2px solid var(--card-border)',
-                    }}>
+                    <div style={{ marginLeft: '30px', marginTop: '2px', marginBottom: '4px', paddingLeft: '10px', borderLeft: '2px solid var(--card-border)' }}>
                         {item.children.map(child => (
                             <NavLink key={child.id} to={child.route || '#'}
-                                className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
-                                style={{ display: 'block', fontSize: '0.82rem', padding: '6px 10px' }}
+                                style={({ isActive }) => ({
+                                    display: 'block', padding: '6px 10px', borderRadius: '7px',
+                                    fontSize: '0.82rem', fontWeight: 500, textDecoration: 'none',
+                                    color: isActive ? 'var(--primary)' : 'var(--sidebar-text)',
+                                    background: isActive ? 'var(--primary-light)' : 'transparent',
+                                    transition: 'background 0.18s, color 0.18s',
+                                })}
+                                onMouseEnter={e => { if (!e.currentTarget.classList.contains('active')) e.currentTarget.style.background = 'var(--sidebar-hover)'; }}
+                                onMouseLeave={e => { if (!e.currentTarget.classList.contains('active')) e.currentTarget.style.background = 'transparent'; }}
                             >
                                 {child.name}
                             </NavLink>
@@ -71,68 +73,118 @@ function AccordionMenu({ item }) {
     );
 }
 
-/* ── Simple nav item ── */
 function MenuItem({ item }) {
     const icon = icons[item.slug] ?? icons.default;
     if (item.children?.length > 0) return <AccordionMenu item={item} />;
     return (
         <NavLink to={item.route || '#'}
-            className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
-            style={{ display: 'flex', alignItems: 'center', gap: '10px' }}
+            style={({ isActive }) => ({
+                display: 'flex', alignItems: 'center', gap: '10px',
+                padding: '8px 10px', borderRadius: '8px', textDecoration: 'none',
+                fontSize: '0.875rem', fontWeight: 500,
+                color: isActive ? 'var(--primary)' : 'var(--sidebar-text)',
+                background: isActive ? 'var(--primary-light)' : 'transparent',
+                transition: 'background 0.18s, color 0.18s',
+            })}
         >
-            <span style={{ fontSize: '1rem', width: '20px', textAlign: 'center', flexShrink: 0 }}>{icon}</span>
+            <span style={{ width: '20px', textAlign: 'center', flexShrink: 0, fontSize: '1rem' }}>{icon}</span>
             <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.name}</span>
         </NavLink>
     );
 }
 
-/* ── Icon-only collapsed item ── */
 function CollapsedItem({ item }) {
     const icon = icons[item.slug] ?? icons.default;
     return (
         <NavLink to={item.route || item.children?.[0]?.route || '#'} title={item.name}
-            className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
-            style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.1rem', padding: '8px' }}
+            style={({ isActive }) => ({
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                padding: '8px', borderRadius: '8px', textDecoration: 'none', fontSize: '1.1rem',
+                color: isActive ? 'var(--primary)' : 'var(--sidebar-text)',
+                background: isActive ? 'var(--primary-light)' : 'transparent',
+                transition: 'background 0.18s',
+            })}
+        >{icon}</NavLink>
+    );
+}
+
+/* ── User dropdown in header ── */
+function UserDropdown({ user, dark, toggleDark, onLogout }) {
+    const [open, setOpen] = useState(false);
+    const ref = useRef(null);
+    const initials = user?.name?.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) ?? 'U';
+
+    useEffect(() => {
+        const handler = e => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+        document.addEventListener('mousedown', handler);
+        return () => document.removeEventListener('mousedown', handler);
+    }, []);
+
+    return (
+        <div ref={ref} style={{ position: 'relative' }}>
+            <button onClick={() => setOpen(o => !o)} style={{
+                display: 'flex', alignItems: 'center', gap: '8px',
+                padding: '5px 10px 5px 5px', borderRadius: '99px',
+                border: '1px solid var(--card-border)', background: 'var(--card-bg)',
+                cursor: 'pointer', transition: 'box-shadow 0.18s',
+            }}>
+                <div style={{
+                    width: '30px', height: '30px', borderRadius: '50%',
+                    background: 'var(--primary)', color: '#fff',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontSize: '0.72rem', fontWeight: 700, flexShrink: 0,
+                }}>{initials}</div>
+                <div style={{ textAlign: 'left', lineHeight: 1.3 }}>
+                    <p style={{ margin: 0, fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-primary)', whiteSpace: 'nowrap' }}>{user?.name}</p>
+                    <p style={{ margin: 0, fontSize: '0.7rem', color: 'var(--text-secondary)', textTransform: 'capitalize' }}>{user?.role?.name}</p>
+                </div>
+                <span style={{ fontSize: '0.55rem', color: 'var(--text-secondary)', marginLeft: '2px' }}>▼</span>
+            </button>
+
+            {open && (
+                <div style={{
+                    position: 'absolute', right: 0, top: 'calc(100% + 8px)',
+                    width: '200px', borderRadius: '12px',
+                    background: 'var(--card-bg)', border: '1px solid var(--card-border)',
+                    boxShadow: '0 8px 30px rgba(0,0,0,0.12)',
+                    zIndex: 100, overflow: 'hidden',
+                    animation: 'fadeSlideIn 0.2s ease both',
+                }}>
+                    <div style={{ padding: '12px 14px', borderBottom: '1px solid var(--card-border)' }}>
+                        <p style={{ margin: 0, fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-primary)' }}>{user?.name}</p>
+                        <p style={{ margin: 0, fontSize: '0.72rem', color: 'var(--text-secondary)' }}>{user?.email ?? user?.role?.name}</p>
+                    </div>
+                    <div style={{ padding: '6px' }}>
+                        <DropItem icon="🌙" label={dark ? 'Light Mode' : 'Dark Mode'} onClick={() => { toggleDark(); setOpen(false); }} />
+                        <NavLink to="/settings" onClick={() => setOpen(false)} style={{ textDecoration: 'none' }}>
+                            <DropItem icon="⚙️" label="Settings" />
+                        </NavLink>
+                        <div style={{ margin: '4px 0', borderTop: '1px solid var(--card-border)' }} />
+                        <DropItem icon="🚪" label="Sign out" danger onClick={() => { onLogout(); setOpen(false); }} />
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+}
+
+function DropItem({ icon, label, onClick, danger }) {
+    return (
+        <button onClick={onClick} style={{
+            display: 'flex', alignItems: 'center', gap: '10px', width: '100%',
+            padding: '8px 10px', borderRadius: '8px', border: 'none',
+            background: 'transparent', cursor: 'pointer', fontSize: '0.82rem', fontWeight: 500,
+            color: danger ? '#f43f5e' : 'var(--text-primary)',
+            transition: 'background 0.15s',
+        }}
+            onMouseEnter={e => e.currentTarget.style.background = 'var(--sidebar-hover)'}
+            onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
         >
-            {icon}
-        </NavLink>
+            <span>{icon}</span><span>{label}</span>
+        </button>
     );
 }
 
-/* ── Bottom action button ── */
-function ActionBtn({ onClick, to, title, icon, label, danger, collapsed }) {
-    const style = {
-        display: 'flex', alignItems: 'center',
-        justifyContent: collapsed ? 'center' : 'flex-start',
-        gap: '8px', padding: '8px 12px', borderRadius: '8px',
-        border: `1px solid ${danger ? '#fecdd3' : 'var(--card-border)'}`,
-        background: 'transparent',
-        color: danger ? '#f43f5e' : 'var(--text-secondary)',
-        cursor: 'pointer', fontSize: '0.82rem', fontWeight: 500,
-        textDecoration: 'none', whiteSpace: 'nowrap',
-        transition: 'background 0.18s, border-color 0.18s',
-        width: collapsed ? '40px' : '100%',
-        height: '36px',
-    };
-
-    const content = (
-        <>
-            <span style={{ fontSize: '0.95rem', flexShrink: 0 }}>{icon}</span>
-            {!collapsed && <span>{label}</span>}
-        </>
-    );
-
-    if (to) return <NavLink to={to} title={title} style={({ isActive }) => ({
-        ...style,
-        borderColor: isActive ? 'var(--primary)' : style.border.replace('1px solid ', ''),
-        color: isActive ? 'var(--primary)' : style.color,
-        background: isActive ? 'var(--primary-light)' : 'transparent',
-    })}>{content}</NavLink>;
-
-    return <button onClick={onClick} title={title} style={style}>{content}</button>;
-}
-
-/* ── Main layout ── */
 export default function AppLayout() {
     const { user, clearAuth } = useAuthStore();
     const { dark, toggleDark } = useThemeStore();
@@ -148,8 +200,6 @@ export default function AppLayout() {
         navigate('/login');
     };
 
-    const initials = user?.name?.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) ?? 'U';
-
     return (
         <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--body-bg)' }}>
 
@@ -162,23 +212,23 @@ export default function AppLayout() {
                 position: 'sticky', top: 0, height: '100vh',
                 display: 'flex', flexDirection: 'column',
             }}>
-
-                {/* Logo row */}
+                {/* Logo */}
                 <div style={{
                     height: '56px', display: 'flex', alignItems: 'center', flexShrink: 0,
                     padding: '0 12px', borderBottom: '1px solid var(--card-border)',
                     justifyContent: collapsed ? 'center' : 'space-between',
                 }}>
                     {!collapsed && (
-                        <span style={{ color: 'var(--primary)', fontWeight: 700, fontSize: '1.05rem', letterSpacing: '-0.3px' }}>
+                        <span style={{ color: 'var(--primary)', fontWeight: 700, fontSize: '1.1rem', letterSpacing: '-0.3px' }}>
                             SafeTek
                         </span>
                     )}
                     <button onClick={() => setCollapsed(c => !c)} title={collapsed ? 'Expand' : 'Collapse'} style={{
-                        width: '28px', height: '28px', borderRadius: '6px', border: '1px solid var(--card-border)',
-                        background: 'var(--sidebar-hover)', color: 'var(--text-secondary)',
-                        cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        fontSize: '0.65rem', flexShrink: 0, transition: 'background 0.2s',
+                        width: '28px', height: '28px', borderRadius: '6px',
+                        border: '1px solid var(--card-border)', background: 'var(--sidebar-hover)',
+                        color: 'var(--text-secondary)', cursor: 'pointer',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        fontSize: '0.65rem', flexShrink: 0,
                     }}>
                         {collapsed ? '▶' : '◀'}
                     </button>
@@ -194,61 +244,63 @@ export default function AppLayout() {
                         )}
                     </div>
                 </nav>
-
-                {/* ── Bottom ── */}
-                <div style={{ flexShrink: 0, borderTop: '1px solid var(--card-border)' }}>
-
-                    {/* User card — expanded only */}
-                    {!collapsed && (
-                        <div style={{
-                            display: 'flex', alignItems: 'center', gap: '10px',
-                            padding: '12px 14px', borderBottom: '1px solid var(--card-border)',
-                        }}>
-                            <div style={{
-                                width: '36px', height: '36px', borderRadius: '50%',
-                                background: 'var(--primary)', color: '#fff',
-                                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                fontSize: '0.8rem', fontWeight: 700, flexShrink: 0,
-                            }}>{initials}</div>
-                            <div style={{ minWidth: 0 }}>
-                                <p style={{ color: 'var(--text-primary)', fontWeight: 600, fontSize: '0.875rem', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user?.name}</p>
-                                <p style={{ color: 'var(--text-secondary)', fontSize: '0.75rem', margin: 0, textTransform: 'capitalize' }}>{user?.role?.name}</p>
-                            </div>
-                        </div>
-                    )}
-
-                    {/* Action buttons */}
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', padding: '8px' }}>
-                        <ActionBtn
-                            onClick={toggleDark}
-                            title={dark ? 'Light Mode' : 'Dark Mode'}
-                            icon={dark ? '☀️' : '🌙'}
-                            label={dark ? 'Light Mode' : 'Dark Mode'}
-                            collapsed={collapsed}
-                        />
-                        <ActionBtn
-                            to="/settings"
-                            title="Settings"
-                            icon="⚙️"
-                            label="Settings"
-                            collapsed={collapsed}
-                        />
-                        <ActionBtn
-                            onClick={handleLogout}
-                            title="Sign out"
-                            icon="🚪"
-                            label="Sign out"
-                            danger
-                            collapsed={collapsed}
-                        />
-                    </div>
-                </div>
             </aside>
 
-            {/* Main content */}
-            <main style={{ flex: 1, overflow: 'auto', padding: '24px' }} className="animate-in">
-                <Outlet />
-            </main>
+            {/* ── Right side ── */}
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+
+                {/* ── Top Header ── */}
+                <header style={{
+                    height: '56px', flexShrink: 0,
+                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                    padding: '0 24px',
+                    background: 'var(--card-bg)',
+                    borderBottom: '1px solid var(--card-border)',
+                    position: 'sticky', top: 0, zIndex: 50,
+                }}>
+                    {/* Page breadcrumb placeholder */}
+                    <div style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', fontWeight: 500 }}>
+                        SafeTek
+                    </div>
+
+                    {/* Right actions */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        {/* Dark toggle quick button */}
+                        <button onClick={toggleDark} title={dark ? 'Light Mode' : 'Dark Mode'} style={{
+                            width: '34px', height: '34px', borderRadius: '8px',
+                            border: '1px solid var(--card-border)', background: 'var(--card-bg)',
+                            cursor: 'pointer', fontSize: '1rem',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            color: 'var(--text-secondary)', transition: 'background 0.18s',
+                        }}>
+                            {dark ? '☀️' : '🌙'}
+                        </button>
+
+                        {/* User dropdown */}
+                        <UserDropdown
+                            user={user}
+                            dark={dark}
+                            toggleDark={toggleDark}
+                            onLogout={handleLogout}
+                        />
+                    </div>
+                </header>
+
+                {/* ── Main content ── */}
+                <main style={{
+                    flex: 1, overflow: 'auto', padding: '24px',
+                    position: 'relative',
+                    backgroundImage: dark
+                        ? 'url(/app-bg-dark.jpg)'
+                        : 'url(/app-bg.jpg)',
+                    backgroundSize: 'cover',
+                    backgroundPosition: 'center',
+                    backgroundAttachment: 'fixed',
+                    backgroundRepeat: 'no-repeat',
+                }} className="animate-in">
+                    <Outlet />
+                </main>
+            </div>
         </div>
     );
 }
