@@ -3,12 +3,19 @@ import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
 import laravel from 'laravel-vite-plugin';
 
+const isVercel = process.env.VERCEL === '1';
+
 export default defineConfig({
     plugins: [
-        laravel({ input: ['resources/js/main.jsx'], refresh: true }),
+        ...(isVercel ? [] : [laravel({ input: ['resources/js/main.jsx'], refresh: true })]),
         react(),
         tailwindcss(),
     ],
+    build: isVercel ? {
+        outDir: 'public/build',
+        emptyOutDir: true,
+        rollupOptions: { input: 'resources/js/main.jsx' },
+    } : {},
     resolve: {
         alias: { '@': '/resources/js/src' },
     },
