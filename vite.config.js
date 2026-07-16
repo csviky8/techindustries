@@ -12,9 +12,9 @@ export default defineConfig({
         tailwindcss(),
     ],
     build: isVercel ? {
-        outDir: 'public/build',
+        outDir: 'dist',
         emptyOutDir: true,
-        rollupOptions: { input: 'resources/js/main.jsx' },
+        rollupOptions: { input: 'index.html' },
     } : {},
     resolve: {
         alias: { '@': '/resources/js/src' },
