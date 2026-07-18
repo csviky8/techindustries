@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>SafeTek</title>
+    <title>GPSTek</title>
     @viteReactRefresh
     @vite(['resources/js/main.jsx'])
 </head>

@@ -92,7 +92,7 @@ export default function LoginPage() {
                             <IconTruck />
                         </div>
                         <h1 className="text-2xl font-extrabold tracking-tight text-white">
-                            Safe<span className="text-blue-400">Tek</span>
+                            GPS<span className="text-blue-400">Tek</span>
                         </h1>
                         <p className="text-xs text-slate-400">GPS Tracking Management System</p>
                     </div>
@@ -172,7 +172,7 @@ export default function LoginPage() {
 
                     {/* Footer */}
                     <p className="mt-8 text-center text-xs text-slate-600">
-                        © 2024 SafeTek. All rights reserved.
+                        © 2024 GPSTek. All rights reserved.
                     </p>
                 </div>
             </div>

@@ -16,7 +16,7 @@ class AdminUserSeeder extends Seeder
 
         // ── Admin ──────────────────────────────────────────────
         User::firstOrCreate(
-            ['email' => 'admin@safetek.com'],
+            ['email' => 'admin@gpstech.com'],
             [
                 'name'        => 'Admin',
                 'username'    => 'admin',
@@ -29,7 +29,7 @@ class AdminUserSeeder extends Seeder
 
         // ── Dealer ─────────────────────────────────────────────
         $dealer = User::firstOrCreate(
-            ['email' => 'prabhu@safetek.com'],
+            ['email' => 'prabhu@gpstech.com'],
             [
                 'name'        => 'Prabhu',
                 'username'    => 'prabhu',
@@ -46,7 +46,7 @@ class AdminUserSeeder extends Seeder
         // ── Staff / Technicians under dealer ───────────────────
         $staffList = [
             ['name' => 'kisupathi',    'phone' => '9176808838', 'email' => 'uts1@gmail.com',                'username' => '9176808838', 'state' => 'Tamil Nadu', 'district' => 'Namakkal'],
-            ['name' => 'PRAVEEN KUMAR','phone' => '9489187118', 'email' => 'suntech@24gmail.com',           'username' => '9489187118', 'state' => 'Tamil Nadu', 'district' => 'Dharmapuri'],
+            ['name' => 'PRAVEEN KUMAR','phone' => '9489187118', 'email' => 'suntech24@gmail.com',           'username' => '9489187118', 'state' => 'Tamil Nadu', 'district' => 'Dharmapuri'],
             ['name' => 'raja puc',     'phone' => '9443407837', 'email' => 'prajanetc@gmail.com',           'username' => '9443407837', 'state' => 'Tamil Nadu', 'district' => 'Namakkal'],
             ['name' => 'RAJESKANNA',   'phone' => '9159414859', 'email' => 'rajeshmaha999.rs@gmail.com',    'username' => '9159414859', 'state' => 'Tamil Nadu', 'district' => 'Namakkal'],
             ['name' => 'roshan',       'phone' => '9842632419', 'email' => 'roshanhema15@gmail.com',        'username' => '9842632419', 'state' => 'Tamil Nadu', 'district' => 'Namakkal'],
