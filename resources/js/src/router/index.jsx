@@ -7,7 +7,11 @@ import UsersPage from '../pages/UsersPage';
 import RolesPage from '../pages/RolesPage';
 import RtosPage from '../pages/RtosPage';
 import InstallerPage from '../pages/InstallerPage';
+import MasterSettingsPage from '../pages/MasterSettingsPage';
+import ActivityLogPage from '../pages/ActivityLogPage';
 import SettingsPage from '../pages/SettingsPage';
+import DealerJurisdictionPage from '../pages/DealerJurisdictionPage';
+import WebInstallPage from '../pages/WebInstallPage';
 
 const Placeholder = ({ title }) => (
     <div className="animate-in">
@@ -38,13 +42,15 @@ export const router = createBrowserRouter([
                     { path: '/reports', element: <Placeholder title="Reports" /> },
                     { path: '/add-on-plan/year', element: <Placeholder title="Add On Year Plan" /> },
                     { path: '/user-manual', element: <Placeholder title="User Manual" /> },
+                    { path: '/fitment/web-install', element: <WebInstallPage /> },
+                    { path: '/fitment/fitter-list', element: <Placeholder title="Fitter List" /> },
 
                     // Admin + Dealer only
                     {
                         element: <RequireRole roles={['admin', 'dealer']} />,
                         children: [
                             { path: '/accounts/installer', element: <InstallerPage /> },
-                            { path: '/accounts/dealer-jurisdiction', element: <RtosPage /> },
+                            { path: '/accounts/dealer-jurisdiction', element: <DealerJurisdictionPage /> },
                         ],
                     },
 
@@ -55,6 +61,8 @@ export const router = createBrowserRouter([
                             { path: '/users', element: <UsersPage /> },
                             { path: '/roles', element: <RolesPage /> },
                             { path: '/permissions', element: <Placeholder title="Permissions" /> },
+                            { path: '/master-settings', element: <MasterSettingsPage /> },
+                            { path: '/activity-log', element: <ActivityLogPage /> },
                         ],
                     },
                 ],

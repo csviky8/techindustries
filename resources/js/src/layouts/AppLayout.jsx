@@ -14,6 +14,8 @@ const icons = {
     'add-on-plan':       '➕',
     'user-manual':       '📖',
     administration:      '🛡️',
+    'master-settings':   '⚙️',
+    'activity-log':      '📋',
     default:             '◈',
 };
 

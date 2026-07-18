@@ -124,3 +124,10 @@ body {
 ::-webkit-scrollbar { width: 5px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--card-border); border-radius: 99px; }
+
+/* ── Print ── */
+@media print {
+    body > * { display: none !important; }
+    .print-slip { display: block !important; border: none !important; max-width: 100% !important; }
+    button { display: none !important; }
+}

@@ -4,13 +4,35 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
 use App\Http\Resources\RtoResource;
+use App\Models\ActivityLog;
 use App\Models\Rto;
+use App\Models\RtoZone;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
 class RtoController extends Controller
 {
+    public function zones(): JsonResponse
+    {
+        $zones = RtoZone::with(['rtos' => fn($q) => $q->orderBy('code')])
+            ->where('is_active', true)
+            ->orderBy('name')
+            ->get()
+            ->map(fn($z) => [
+                'id'   => $z->id,
+                'name' => $z->name,
+                'rtos' => $z->rtos->map(fn($r) => [
+                    'id'        => $r->id,
+                    'name'      => $r->name,
+                    'code'      => $r->code,
+                    'is_active' => $r->is_active,
+                ]),
+            ]);
+
+        return response()->json(['data' => $zones]);
+    }
+
     public function index(Request $request): AnonymousResourceCollection
     {
         $query = Rto::query();
@@ -43,7 +65,7 @@ class RtoController extends Controller
         ]);
 
         $rto = Rto::create($data);
-
+        ActivityLog::record('RTOs', 'create', "Created RTO: {$rto->name} ({$rto->code})", ['id' => $rto->id]);
         return response()->json(['data' => new RtoResource($rto)], 201);
     }
 
@@ -56,14 +78,14 @@ class RtoController extends Controller
         ]);
 
         $rto->update($data);
-
+        ActivityLog::record('RTOs', 'update', "Updated RTO: {$rto->name} ({$rto->code})", ['id' => $rto->id]);
         return response()->json(['data' => new RtoResource($rto)]);
     }
 
     public function destroy(Rto $rto): JsonResponse
     {
         $rto->delete();
-
+        ActivityLog::record('RTOs', 'delete', "Deleted RTO: {$rto->name} ({$rto->code})", ['id' => $rto->id]);
         return response()->json(['message' => 'RTO deleted.']);
     }
 }

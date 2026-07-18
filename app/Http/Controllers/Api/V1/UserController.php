@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
 use App\Http\Resources\UserResource;
+use App\Models\ActivityLog;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -63,7 +64,7 @@ class UserController extends Controller
         ]);
 
         $user = User::create($data);
-
+        ActivityLog::record('Users', 'create', "Created user: {$user->name}", ['id' => $user->id]);
         return response()->json(['data' => new UserResource($user->load('role', 'dealer'))], 201);
     }
 
@@ -85,14 +86,14 @@ class UserController extends Controller
         ]);
 
         $user->update($data);
-
+        ActivityLog::record('Users', 'update', "Updated user: {$user->name}", ['id' => $user->id]);
         return response()->json(['data' => new UserResource($user->load('role', 'dealer'))]);
     }
 
     public function destroy(User $user): JsonResponse
     {
         $user->delete();
-
+        ActivityLog::record('Users', 'delete', "Deleted user: {$user->name}", ['id' => $user->id]);
         return response()->json(['message' => 'User deleted.']);
     }
 
@@ -162,7 +163,7 @@ class UserController extends Controller
         $data['dealer_name'] = $auth->isDealer() ? ($auth->dealer_name ?? $auth->name) : $request->dealer_name;
 
         $user = User::create($data);
-
+        ActivityLog::record('Installers', 'create', "Created installer: {$user->name}", ['id' => $user->id]);
         return response()->json(['data' => new UserResource($user->load('role'))], 201);
     }
 
@@ -186,7 +187,7 @@ class UserController extends Controller
         ]);
 
         $user->update($data);
-
+        ActivityLog::record('Installers', 'update', "Updated installer: {$user->name}", ['id' => $user->id]);
         return response()->json(['data' => new UserResource($user->load('role'))]);
     }
 
@@ -199,7 +200,7 @@ class UserController extends Controller
         }
 
         $user->delete();
-
+        ActivityLog::record('Installers', 'delete', "Deleted installer: {$user->name}", ['id' => $user->id]);
         return response()->json(['message' => 'Installer deleted.']);
     }
 }

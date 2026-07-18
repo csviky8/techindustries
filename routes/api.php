@@ -1,6 +1,9 @@
 <?php
 
+use App\Http\Controllers\Api\V1\ActivityLogController;
 use App\Http\Controllers\Api\V1\AuthController;
+use App\Http\Controllers\Api\V1\DeviceSettingsController;
+use App\Http\Controllers\Api\V1\FitmentController;
 use App\Http\Controllers\Api\V1\MenuController;
 use App\Http\Controllers\Api\V1\ProjectController;
 use App\Http\Controllers\Api\V1\RoleController;
@@ -11,6 +14,7 @@ use Illuminate\Support\Facades\Route;
 Route::prefix('v1')->group(function () {
     // Public auth routes
     Route::post('login', [AuthController::class, 'login']);
+    Route::get('settings/devices/template', [DeviceSettingsController::class, 'template']);
 
     // Authenticated routes
     Route::middleware('auth:sanctum')->group(function () {
@@ -20,11 +24,19 @@ Route::prefix('v1')->group(function () {
         // Projects — all authenticated users
         Route::apiResource('projects', ProjectController::class);
 
+        // Fitment (all authenticated)
+        Route::get('fitment/search', [FitmentController::class, 'searchDevice']);
+        Route::post('fitment', [FitmentController::class, 'store']);
+        Route::get('fitment/slip/{vehicle}', [FitmentController::class, 'slip']);
+        Route::get('rtos/zones', [RtoController::class, 'zones']);
+
         // Admin-only routes
         Route::middleware('role:admin')->group(function () {
             Route::apiResource('users', UserController::class);
             Route::apiResource('roles', RoleController::class);
             Route::apiResource('rtos', RtoController::class);
+            Route::get('activity-logs', [ActivityLogController::class, 'index']);
+            Route::post('settings/devices/import', [DeviceSettingsController::class, 'import']);
         });
 
         // Admin sees all staff, dealer sees only their own staff

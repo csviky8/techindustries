@@ -13,6 +13,7 @@ class DatabaseSeeder extends Seeder
             AdminUserSeeder::class,
             MenuSeeder::class,
             RtoSeeder::class,
+            RtoZoneSeeder::class,
         ]);
     }
 }
