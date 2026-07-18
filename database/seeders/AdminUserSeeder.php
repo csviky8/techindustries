@@ -15,23 +15,27 @@ class AdminUserSeeder extends Seeder
         $staffRole  = Role::where('slug', 'staff')->first();
 
         // ── Admin ──────────────────────────────────────────────
-        User::firstOrCreate(
-            ['email' => 'admin@gpstech.com'],
-            [
-                'name'        => 'Admin',
-                'username'    => 'admin',
-                'phone'       => '9000000000',
-                'password'    => bcrypt('Admin@1234'),
-                'role_id'     => $adminRole?->id,
-                'is_approved' => true,
-            ]
-        );
+        User::withoutEvents(function () use ($adminRole) {
+            User::updateOrCreate(
+                ['username' => 'admin'],
+                [
+                    'name'        => 'Admin',
+                    'email'       => 'admin@gpstech.com',
+                    'username'    => 'admin',
+                    'phone'       => '9000000000',
+                    'password'    => bcrypt('Admin@1234'),
+                    'role_id'     => $adminRole?->id,
+                    'is_approved' => true,
+                ]
+            );
+        });
 
         // ── Dealer ─────────────────────────────────────────────
-        $dealer = User::firstOrCreate(
-            ['email' => 'prabhu@gpstech.com'],
+        $dealer = User::updateOrCreate(
+            ['username' => 'prabhu'],
             [
                 'name'        => 'Prabhu',
+                'email'       => 'prabhu@gpstech.com',
                 'username'    => 'prabhu',
                 'phone'       => '9800000001',
                 'dealer_name' => 'Univer Saltele Services(NAMAKALSOUTH)',
@@ -56,7 +60,7 @@ class AdminUserSeeder extends Seeder
         ];
 
         foreach ($staffList as $staff) {
-            User::firstOrCreate(
+            User::updateOrCreate(
                 ['phone' => $staff['phone']],
                 [
                     'name'        => $staff['name'],
