@@ -7,7 +7,14 @@ import { useThemeStore } from './src/store/themeStore.js';
 import './app.css';
 
 const queryClient = new QueryClient({
-    defaultOptions: { queries: { retry: 1, staleTime: 30_000 } },
+    defaultOptions: {
+        queries: {
+            retry: 1,
+            staleTime: 0,
+            gcTime: 5 * 60 * 1000,
+            refetchOnWindowFocus: false,
+        },
+    },
 });
 
 function ThemeProvider({ children }) {

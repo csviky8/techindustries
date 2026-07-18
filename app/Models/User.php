@@ -15,7 +15,7 @@ class User extends Authenticatable
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable, HasApiTokens;
 
-    protected $fillable = ['name', 'email', 'password', 'role_id'];
+    protected $fillable = ['name', 'email', 'username', 'phone', 'password', 'role_id', 'dealer_id', 'state', 'district', 'address', 'dealer_name', 'is_approved'];
 
     protected $hidden = ['password', 'remember_token'];
 
@@ -32,6 +32,16 @@ class User extends Authenticatable
         return $this->belongsTo(Role::class);
     }
 
+    public function dealer(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'dealer_id');
+    }
+
+    public function staff(): HasMany
+    {
+        return $this->hasMany(User::class, 'dealer_id');
+    }
+
     public function projects(): HasMany
     {
         return $this->hasMany(Project::class, 'owner_id');
@@ -42,13 +52,7 @@ class User extends Authenticatable
         return $this->role?->slug === $slug;
     }
 
-    public function hasPermission(string $slug): bool
-    {
-        return $this->role?->hasPermission($slug) ?? false;
-    }
-
-    public function isAdmin(): bool
-    {
-        return $this->hasRole('admin');
-    }
+    public function isAdmin(): bool   { return $this->hasRole('admin'); }
+    public function isDealer(): bool  { return $this->hasRole('dealer'); }
+    public function isStaff(): bool   { return $this->hasRole('staff'); }
 }

@@ -4,9 +4,10 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
 use App\Http\Resources\UserResource;
+use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
@@ -14,21 +15,33 @@ class AuthController extends Controller
     public function login(Request $request): JsonResponse
     {
         $request->validate([
-            'email' => 'required|email',
+            'login'    => 'required|string',
             'password' => 'required|string',
         ]);
 
-        if (!Auth::attempt($request->only('email', 'password'))) {
+        $login = $request->input('login');
+
+        $user = User::where('email', $login)
+            ->orWhere('phone', $login)
+            ->orWhere('username', $login)
+            ->first();
+
+        if (!$user || !Hash::check($request->password, $user->password)) {
             throw ValidationException::withMessages([
-                'email' => ['The provided credentials are incorrect.'],
+                'login' => ['The provided credentials are incorrect.'],
             ]);
         }
 
-        $user = $request->user();
+        if (!$user->is_approved && !$user->isAdmin()) {
+            throw ValidationException::withMessages([
+                'login' => ['Your account is not approved yet.'],
+            ]);
+        }
+
         $token = $user->createToken('spa-token', [$user->role?->slug ?? 'user'])->plainTextToken;
 
         return response()->json([
-            'data' => new UserResource($user->load('role')),
+            'data'  => new UserResource($user->load('role', 'dealer')),
             'token' => $token,
         ]);
     }
@@ -42,6 +55,8 @@ class AuthController extends Controller
 
     public function me(Request $request): JsonResponse
     {
-        return response()->json(['data' => new UserResource($request->user()->load('role'))]);
+        return response()->json([
+            'data' => new UserResource($request->user()->load('role', 'dealer')),
+        ]);
     }
 }

@@ -3,7 +3,6 @@ import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 import { useThemeStore } from '../store/themeStore';
 import { logout } from '../api/auth';
-import { getMenus } from '../api/menus';
 
 const icons = {
     dashboard:           '⊞',
@@ -186,13 +185,10 @@ function DropItem({ icon, label, onClick, danger }) {
 }
 
 export default function AppLayout() {
-    const { user, clearAuth } = useAuthStore();
+    const { user, menus, clearAuth } = useAuthStore();
     const { dark, toggleDark } = useThemeStore();
     const navigate = useNavigate();
-    const [menus, setMenus] = useState([]);
     const [collapsed, setCollapsed] = useState(false);
-
-    useEffect(() => { getMenus().then(setMenus).catch(() => {}); }, []);
 
     const handleLogout = async () => {
         await logout().catch(() => {});

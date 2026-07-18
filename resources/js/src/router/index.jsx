@@ -5,6 +5,8 @@ import LoginPage from '../pages/LoginPage';
 import DashboardPage from '../pages/DashboardPage';
 import UsersPage from '../pages/UsersPage';
 import RolesPage from '../pages/RolesPage';
+import RtosPage from '../pages/RtosPage';
+import InstallerPage from '../pages/InstallerPage';
 import SettingsPage from '../pages/SettingsPage';
 
 const Placeholder = ({ title }) => (
@@ -25,8 +27,8 @@ export const router = createBrowserRouter([
                     { path: '/', element: <DashboardPage /> },
                     { path: '/dashboard', element: <DashboardPage /> },
                     { path: '/settings', element: <SettingsPage /> },
-                    { path: '/accounts/installer', element: <Placeholder title="Installer" /> },
-                    { path: '/accounts/dealer-jurisdiction', element: <Placeholder title="Dealer Jurisdiction View" /> },
+
+                    // All roles
                     { path: '/authorization/deployed-device', element: <Placeholder title="Deployed Device" /> },
                     { path: '/authorization/owner-change', element: <Placeholder title="Owner Change" /> },
                     { path: '/authorization/approved-device', element: <Placeholder title="Approved Device" /> },
@@ -36,6 +38,17 @@ export const router = createBrowserRouter([
                     { path: '/reports', element: <Placeholder title="Reports" /> },
                     { path: '/add-on-plan/year', element: <Placeholder title="Add On Year Plan" /> },
                     { path: '/user-manual', element: <Placeholder title="User Manual" /> },
+
+                    // Admin + Dealer only
+                    {
+                        element: <RequireRole roles={['admin', 'dealer']} />,
+                        children: [
+                            { path: '/accounts/installer', element: <InstallerPage /> },
+                            { path: '/accounts/dealer-jurisdiction', element: <RtosPage /> },
+                        ],
+                    },
+
+                    // Admin only
                     {
                         element: <RequireRole roles={['admin']} />,
                         children: [

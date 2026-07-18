@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { login } from '../api/auth';
+import { getMenus } from '../api/menus';
 import { useAuthStore } from '../store/authStore';
 
 const IconUser = () => (
@@ -50,8 +51,11 @@ export default function LoginPage() {
         setErrors({});
         setLoading(true);
         try {
-            const res = await login({ email: form.email, password: form.password });
-            setAuth(res.data.data, res.data.token);
+            const res = await login({ login: form.email, password: form.password });
+            // Save token to localStorage FIRST so axios interceptor can use it
+            localStorage.setItem('token', res.data.token);
+            const menus = await getMenus();
+            setAuth(res.data.data, res.data.token, menus);
             navigate('/dashboard');
         } catch (err) {
             const d = err.response?.data;
@@ -102,18 +106,18 @@ export default function LoginPage() {
                     {/* ── Form ── */}
                     <form onSubmit={handleSubmit} noValidate className="space-y-4">
 
-                        {/* Email */}
+                        {/* Email or Phone */}
                         <div>
-                            <div className={`flex items-center gap-3 rounded-xl border px-4 py-3 transition-all focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500/30 ${errors.email ? 'border-red-500/60 bg-red-900/10' : 'border-slate-600/50 bg-white/5'}`}>
+                            <div className={`flex items-center gap-3 rounded-xl border px-4 py-3 transition-all focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500/30 ${errors.login ? 'border-red-500/60 bg-red-900/10' : 'border-slate-600/50 bg-white/5'}`}>
                                 <IconUser />
                                 <input
-                                    id="email" type="email" autoComplete="email"
-                                    placeholder="Username or Email"
+                                    id="login" type="text" autoComplete="username"
+                                    placeholder="Email or Phone Number"
                                     value={form.email} onChange={set('email')} required
                                     className="flex-1 min-w-0 bg-transparent text-sm text-white placeholder-slate-500 focus:outline-none"
                                 />
                             </div>
-                            {errors.email && <p role="alert" className="mt-1 text-xs text-red-400">{errors.email[0]}</p>}
+                            {errors.login && <p role="alert" className="mt-1 text-xs text-red-400">{errors.login[0]}</p>}
                         </div>
 
                         {/* Password */}

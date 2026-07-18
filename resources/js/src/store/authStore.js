@@ -6,16 +6,18 @@ export const useAuthStore = create(
         (set) => ({
             user: null,
             token: null,
-            setAuth: (user, token) => {
+            menus: [],
+            setAuth: (user, token, menus = []) => {
                 localStorage.setItem('token', token);
-                set({ user, token });
+                set({ user, token, menus });
             },
             setUser: (user) => set({ user }),
+            setMenus: (menus) => set({ menus }),
             clearAuth: () => {
                 localStorage.removeItem('token');
-                set({ user: null, token: null });
+                set({ user: null, token: null, menus: [] });
             },
         }),
-        { name: 'auth-storage', partialize: (s) => ({ token: s.token }) }
+        { name: 'auth-storage', partialize: (s) => ({ token: s.token, user: s.user, menus: s.menus }) }
     )
 );
