@@ -163,7 +163,7 @@ export default function WebInstallPage() {
             </div>
 
             {/* Device Info Card */}
-            {device && (
+            {device && !slip && (
                 <div style={{
                     background: 'rgba(16,185,129,0.06)', border: '1px solid rgba(16,185,129,0.25)',
                     borderRadius: '12px', padding: '16px 20px',
@@ -191,7 +191,7 @@ export default function WebInstallPage() {
             )}
 
             {/* Fitment Form */}
-            {device && (
+            {device && !slip && (
                 <div style={{
                     background: 'var(--card-bg)', border: '1px solid var(--card-border)',
                     borderRadius: '12px', padding: '20px',
