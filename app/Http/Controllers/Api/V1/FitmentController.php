@@ -111,7 +111,23 @@ class FitmentController extends Controller
 
     public function fittedList(Request $request): JsonResponse
     {
-        $q = GpsDeviceDetail::with(['vehicle.zone', 'vehicle.rtoModel', 'device'])
+        $q = GpsDeviceDetail::select([
+                'id', 'vehicle_id', 'device_id', 'dealer_id',
+                'fitted_date', 'end_date', 'technician_mobile',
+                'sim_plan', 'sim_validity',
+                'uin_number', 'panic_button_count',
+                'temp_certificate_date', 'vahan_certificate_date',
+                'temp_certificate_file', 'vahan_certificate_file',
+                'rc_book_file', 'device_fitment_file', 'vehicle_image',
+                'approval_notes', 'approved_by', 'approved_status',
+                'remarks', 'status', 'created_at', 'updated_at',
+            ])
+            ->with([
+                'vehicle:id,zone_id,rto_id,vehicle_reg_no,vehicle_reg_date,owner_name,owner_mobile,rto,vehicle_type,chassis_no,engine_no,department',
+                'vehicle.zone:id,name',
+                'vehicle.rtoModel:id,code,name',
+                'device:id,imei,serial_no,manufacturer,device_model,part_no,iccid_1,iccid_2,sim_1,sim_2',
+            ])
             ->whereHas('vehicle');
 
         if ($imei = $request->query('imei'))
@@ -132,13 +148,16 @@ class FitmentController extends Controller
         if ($fitted = $request->query('fitted_date'))
             $q->whereDate('fitted_date', $fitted);
 
+        if ($validity = $request->query('validity'))
+            $q->where('sim_plan', 'like', "%{$validity}%");
+
         if ($tempCert = $request->query('temp_cert'))
             $q->where($tempCert === 'yes' ? fn($x) => $x->whereNotNull('temp_certificate_file') : fn($x) => $x->whereNull('temp_certificate_file'));
 
         if ($rtoApproved = $request->query('rto_approved'))
             $q->where('approved_status', $rtoApproved);
 
-        $data = $q->latest()->paginate(50);
+        $data = $q->orderByDesc('id')->paginate(50);
         return response()->json($data);
     }
 

@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { useLocation } from 'react-router-dom';
 import api from '../api/client';
+import { getRtoZonesCached } from '../api/lookups';
 import Modal from '../components/Modal';
 import SearchSelect from '../components/SearchSelect';
 
@@ -411,9 +411,6 @@ function ViewDetail({ row: initialRow, rtos, onUpdated, editing, onSaveDone, sav
 
 
 export default function FittedListPage() {
-    const location = useLocation();
-    const isApprovedView = ['/authorization/approved-device', '/authorization/rto-approved'].includes(location.pathname);
-
     const [rows, setRows]           = useState([]);
     const [meta, setMeta]           = useState(null);
     const [loading, setLoading]     = useState(false);
@@ -422,7 +419,7 @@ export default function FittedListPage() {
 
     const [filters, setFilters] = useState({
         imei: '', manufacturer: '', vehicle_reg_no: '', owner_mobile: '',
-        rto_id: '', fitted_date: '', temp_cert: '', rto_approved: isApprovedView ? 'Approved' : '',
+        rto_id: '', validity: '', fitted_date: '', temp_cert: '',
     });
 
     // View modal
@@ -436,30 +433,22 @@ export default function FittedListPage() {
     const [certFile, setCertFile]     = useState(null);
     const [certSaving, setCertSaving] = useState(false);
 
-    // RTO Approve modal
-    const [approveModal, setApproveModal]   = useState(null); // gps row
-    const [approveForm, setApproveForm]     = useState({ approved_status: 'Pending', approval_notes: '' });
-    const [approveSaving, setApproveSaving] = useState(false);
-
     const fetchList = useCallback(async (f = filters) => {
         setLoading(true);
         try {
-            const params = Object.fromEntries(Object.entries({
-                ...f,
-                ...(isApprovedView ? { rto_approved: 'Approved' } : {}),
-            }).filter(([, v]) => v !== ''));
+            const params = Object.fromEntries(Object.entries(f).filter(([, v]) => v !== ''));
             const r = await api.get('/fitment/fitted-list', { params });
             setRows(r.data.data);
             setMeta(r.data.meta);
         } finally {
             setLoading(false);
         }
-    }, [filters, isApprovedView]);
+    }, [filters]);
 
     useEffect(() => {
         fetchList();
-        api.get('/rtos/zones').then(r => {
-            const allRtos = r.data.data.flatMap(z => z.rtos || []);
+        getRtoZonesCached().then(data => {
+            const allRtos = data.flatMap(z => z.rtos || []);
             setRtos(allRtos);
             const mfrs = [...new Set([])]; // manufacturers come from device list
             setMfrs(mfrs);
@@ -472,8 +461,7 @@ export default function FittedListPage() {
     const handleReset  = () => {
         const empty = {
             imei: '', manufacturer: '', vehicle_reg_no: '', owner_mobile: '',
-            rto_id: '', fitted_date: '', temp_cert: '',
-            rto_approved: isApprovedView ? 'Approved' : '',
+            rto_id: '', validity: '', fitted_date: '', temp_cert: '',
         };
         setFilters(empty);
         fetchList(empty);
@@ -497,32 +485,16 @@ export default function FittedListPage() {
         }
     };
 
-    // RTO approve
-    const openApproveModal = (row) => {
-        setApproveModal(row);
-        setApproveForm({ approved_status: row.approved_status || 'Pending', approval_notes: row.approval_notes || '' });
-    };
-    const handleApproveSave = async () => {
-        setApproveSaving(true);
-        try {
-            await api.post(`/fitment/${approveModal.id}/rto-approve`, approveForm);
-            setApproveModal(null);
-            fetchList(filters);
-        } finally {
-            setApproveSaving(false);
-        }
-    };
-
     const pending = meta ? meta.total : rows.length;
 
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             <div>
                 <h1 style={{ margin: 0, fontSize: '1.4rem', fontWeight: 700, color: 'var(--text-primary)' }}>
-                    {isApprovedView ? 'RTO Approved List' : 'Fitted List'}
+                    Fitted List
                 </h1>
                 <p style={{ margin: '2px 0 0', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-                    {isApprovedView ? 'Only approved GPS fitments' : 'All fitted GPS devices'}
+                    All fitted GPS devices
                 </p>
             </div>
 
@@ -563,6 +535,14 @@ export default function FittedListPage() {
                         />
                     </div>
                     <div>
+                        <div style={{ fontSize: '0.72rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 4 }}>Validity</div>
+                        <select style={inp} value={filters.validity} onChange={e => setF('validity', e.target.value)}>
+                            <option value="">Select</option>
+                            <option value="1">1</option>
+                            <option value="2">2</option>
+                        </select>
+                    </div>
+                    <div>
                         <div style={{ fontSize: '0.72rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 4 }}>Fitted Date</div>
                         <input type="date" style={inp} value={filters.fitted_date} onChange={e => setF('fitted_date', e.target.value)} />
                     </div>
@@ -574,17 +554,6 @@ export default function FittedListPage() {
                             <option value="no">Not Uploaded</option>
                         </select>
                     </div>
-                    {!isApprovedView && (
-                        <div>
-                            <div style={{ fontSize: '0.72rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 4 }}>RTO Approved</div>
-                            <select style={inp} value={filters.rto_approved} onChange={e => setF('rto_approved', e.target.value)}>
-                                <option value="">Select</option>
-                                <option value="Pending">Pending</option>
-                                <option value="Approved">Approved</option>
-                                <option value="Rejected">Rejected</option>
-                            </select>
-                        </div>
-                    )}
                     <div style={{ display: 'flex', gap: '8px' }}>
                         <button onClick={handleFilter} style={{
                             flex: 1, padding: '7px 0', borderRadius: '7px', border: 'none',
@@ -661,21 +630,6 @@ export default function FittedListPage() {
                                                 >
                                                     {hasCert ? '✅' : '❌'}
                                                 </span>
-
-                                                {/* RTO Approve */}
-                                                {!isApprovedView && (
-                                                    <button
-                                                        title={`RTO Approval: ${row.approved_status}`}
-                                                        onClick={() => openApproveModal(row)}
-                                                        style={iconBtn(
-                                                            row.approved_status === 'Approved' ? '#059669' :
-                                                            row.approved_status === 'Rejected' ? '#dc2626' : '#b45309'
-                                                        )}
-                                                    >
-                                                        {row.approved_status === 'Approved' ? '✅' :
-                                                         row.approved_status === 'Rejected' ? '❌' : '🕐'}
-                                                    </button>
-                                                )}
 
                                                 {/* View */}
                                                 <button title="View" onClick={() => setViewModal(row)} style={iconBtn()}>👁</button>
@@ -759,46 +713,6 @@ export default function FittedListPage() {
                                 background: 'var(--primary)', color: '#fff', fontWeight: 700,
                                 fontSize: '0.85rem', cursor: 'pointer', opacity: !certFile || certSaving ? 0.6 : 1,
                             }}>{certSaving ? 'Uploading...' : 'Upload'}</button>
-                        </div>
-                    </div>
-                )}
-            </Modal>
-
-            {/* RTO Approve Modal */}
-            <Modal open={!!approveModal} onClose={() => setApproveModal(null)} title="🏛️ RTO Approval Status">
-                {approveModal && (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-                        <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-                            Vehicle: <strong style={{ color: 'var(--text-primary)' }}>{approveModal.vehicle?.vehicle_reg_no}</strong>
-                            &nbsp;|&nbsp; Current: <Badge status={approveModal.approved_status} />
-                        </p>
-                        <div>
-                            <div style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 6 }}>Status</div>
-                            <select style={inp} value={approveForm.approved_status}
-                                onChange={e => setApproveForm(f => ({ ...f, approved_status: e.target.value }))}>
-                                <option value="Pending">Pending</option>
-                                <option value="Approved">Approved</option>
-                                <option value="Rejected">Rejected</option>
-                            </select>
-                        </div>
-                        <div>
-                            <div style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 6 }}>Notes</div>
-                            <textarea rows={3} style={{ ...inp, resize: 'vertical' }}
-                                placeholder="Add approval notes..."
-                                value={approveForm.approval_notes}
-                                onChange={e => setApproveForm(f => ({ ...f, approval_notes: e.target.value }))}
-                            />
-                        </div>
-                        <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
-                            <button onClick={() => setApproveModal(null)} style={{
-                                padding: '8px 18px', borderRadius: '8px', border: '1px solid var(--card-border)',
-                                background: 'transparent', color: 'var(--text-secondary)', cursor: 'pointer', fontSize: '0.85rem',
-                            }}>Cancel</button>
-                            <button onClick={handleApproveSave} disabled={approveSaving} style={{
-                                padding: '8px 20px', borderRadius: '8px', border: 'none',
-                                background: 'var(--primary)', color: '#fff', fontWeight: 700,
-                                fontSize: '0.85rem', cursor: 'pointer', opacity: approveSaving ? 0.6 : 1,
-                            }}>{approveSaving ? 'Saving...' : 'Save'}</button>
                         </div>
                     </div>
                 )}
