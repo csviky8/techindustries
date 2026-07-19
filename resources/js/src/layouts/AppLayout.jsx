@@ -218,7 +218,7 @@ export default function AppLayout() {
                 }}>
                     {!collapsed && (
                         <span style={{ color: 'var(--primary)', fontWeight: 700, fontSize: '1.1rem', letterSpacing: '-0.3px' }}>
-                            GPSTek
+                            Aura Industrial
                         </span>
                     )}
                     <button onClick={() => setCollapsed(c => !c)} title={collapsed ? 'Expand' : 'Collapse'} style={{
@@ -258,7 +258,7 @@ export default function AppLayout() {
                 }}>
                     {/* Page breadcrumb placeholder */}
                     <div style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', fontWeight: 500 }}>
-                        GPSTek
+                        Aura Industrial
                     </div>
 
                     {/* Right actions */}
