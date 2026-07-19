@@ -4,12 +4,35 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Http\Request;
 
+function fitmentCorsHeaders(Request $request): array
+{
+    $origin = $request->headers->get('Origin');
+    $allowed = array_filter(array_map('trim', explode(',', (string) env('CORS_ALLOWED_ORIGINS', 'http://localhost:5173,http://localhost:3000,https://safetek-theta.vercel.app'))));
+
+    if (!$origin || !in_array($origin, $allowed, true)) {
+        return [];
+    }
+
+    return [
+        'Access-Control-Allow-Origin' => $origin,
+        'Access-Control-Allow-Credentials' => 'true',
+        'Access-Control-Expose-Headers' => 'Content-Disposition, Content-Length, Content-Type',
+        'Vary' => 'Origin',
+    ];
+}
+
 Route::get('/fitment-file', function (Request $request) {
     $path = (string) $request->query('path', '');
 
     abort_if(!$path || !Storage::disk('public')->exists($path), 404);
 
-    return Storage::disk('public')->response($path);
+    $response = Storage::disk('public')->response($path);
+
+    foreach (fitmentCorsHeaders($request) as $header => $value) {
+        $response->headers->set($header, $value);
+    }
+
+    return $response;
 });
 
 Route::get('/{any}', fn() => view('app'))->where('any', '.*');
