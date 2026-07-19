@@ -172,6 +172,21 @@ class FitmentController extends Controller
         return response()->json(['message' => 'Uploaded.', 'gps' => $gps->fresh(['vehicle.zone', 'vehicle.rtoModel', 'device'])]);
     }
 
+    public function downloadDoc(Request $request, GpsDeviceDetail $gps): \Symfony\Component\HttpFoundation\BinaryFileResponse
+    {
+        $allowed = ['rc_book_file', 'device_fitment_file', 'vehicle_image', 'temp_certificate_file'];
+        $request->validate([
+            'field' => 'required|in:' . implode(',', $allowed),
+        ]);
+
+        $field = $request->input('field');
+        $path = $gps->{$field};
+
+        abort_if(!$path || !Storage::disk('public')->exists($path), 404);
+
+        return response()->file(Storage::disk('public')->path($path));
+    }
+
     public function updateFitment(Request $request, GpsDeviceDetail $gps): JsonResponse
     {
         $data = $request->validate([

@@ -80,6 +80,16 @@ const DOC_FIELDS = [
     { field: 'temp_certificate_file', label: 'Temporary Certificate', icon: '📋', accept: '.pdf,.jpg,.jpeg,.png' },
 ];
 
+const getFileBaseUrl = () => {
+    const apiBase = import.meta.env.VITE_API_URL ?? '/api/v1';
+    try {
+        const url = new URL(apiBase, window.location.origin);
+        return url.pathname.replace(/\/api\/v1\/?$/, '') ? `${url.origin}${url.pathname.replace(/\/api\/v1\/?$/, '')}` : url.origin;
+    } catch {
+        return window.location.origin;
+    }
+};
+
 function DocCard({ field, label, icon, accept, path: initialPath, gpsId, onUploaded }) {
     const [uploading, setUploading] = useState(false);
     const [path, setPath] = useState(initialPath);
@@ -108,8 +118,7 @@ function DocCard({ field, label, icon, accept, path: initialPath, gpsId, onUploa
     };
 
     const isImage = path && /\.(jpg|jpeg|png)$/i.test(path);
-    const fileUrl = path ? `/storage/${path}?t=${Date.now()}` : null;
-
+    const fileUrl = path ? `${getFileBaseUrl()}/storage/${encodeURI(path)}` : null;
     return (
         <div style={{
             border: '1px solid var(--card-border)', borderRadius: '10px',
@@ -120,11 +129,11 @@ function DocCard({ field, label, icon, accept, path: initialPath, gpsId, onUploa
                 height: '120px', display: 'flex', alignItems: 'center', justifyContent: 'center',
                 background: 'var(--card-bg)', position: 'relative', overflow: 'hidden',
                 cursor: path ? 'pointer' : 'default',
-            }} onClick={() => path && window.open(`/storage/${path}`, '_blank')}>
+            }} onClick={() => fileUrl && window.open(fileUrl, '_blank', 'noopener,noreferrer')}>
                 {path ? (
                     isImage ? (
                         <img
-                            src={`/storage/${path}`}
+                            src={fileUrl || undefined}
                             alt={label}
                             style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                             onError={e => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }}
@@ -157,7 +166,7 @@ function DocCard({ field, label, icon, accept, path: initialPath, gpsId, onUploa
                     {path && (
                         <>
                             <button
-                                onClick={() => window.open(`/storage/${path}`, '_blank')}
+                                onClick={() => fileUrl && window.open(fileUrl, '_blank', 'noopener,noreferrer')}
                                 style={{
                                     flex: 1, padding: '5px 0', borderRadius: '6px', fontSize: '0.72rem',
                                     fontWeight: 600, textAlign: 'center', cursor: 'pointer',
@@ -165,7 +174,7 @@ function DocCard({ field, label, icon, accept, path: initialPath, gpsId, onUploa
                                     background: 'transparent',
                                 }}>👁 View</button>
                             <a
-                                href={`/storage/${path}`}
+                                href={fileUrl || undefined}
                                 download
                                 style={{
                                     flex: 1, padding: '5px 0', borderRadius: '6px', fontSize: '0.72rem',

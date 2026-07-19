@@ -34,6 +34,7 @@ Route::prefix('v1')->group(function () {
         Route::post('fitment/{gps}/temp-cert', [FitmentController::class, 'uploadTempCert']);
         Route::post('fitment/{gps}/rto-approve', [FitmentController::class, 'rtoApprove']);
         Route::post('fitment/{gps}/upload-doc', [FitmentController::class, 'uploadDoc']);
+        Route::get('fitment/{gps}/doc', [FitmentController::class, 'downloadDoc']);
         Route::post('fitment/{gps}/update', [FitmentController::class, 'updateFitment']);
         Route::get('rtos/zones', [RtoController::class, 'zones']);
 

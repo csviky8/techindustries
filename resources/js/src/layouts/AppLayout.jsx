@@ -193,7 +193,7 @@ export default function AppLayout() {
     const [collapsed, setCollapsed] = useState(false);
 
     const handleLogout = async () => {
-        await logout().catch(() => {});
+        void logout().catch(() => {});
         clearAuth();
         navigate('/login');
     };

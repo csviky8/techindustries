@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { login } from '../api/auth';
-import { getMenus } from '../api/menus';
 import { useAuthStore } from '../store/authStore';
 
 const IconUser = () => (
@@ -54,8 +53,7 @@ export default function LoginPage() {
             const res = await login({ login: form.email, password: form.password });
             // Save token to localStorage FIRST so axios interceptor can use it
             localStorage.setItem('token', res.data.token);
-            const menus = await getMenus();
-            setAuth(res.data.data, res.data.token, menus);
+            setAuth(res.data.data, res.data.token, []);
             navigate('/dashboard');
         } catch (err) {
             const d = err.response?.data;
@@ -172,7 +170,7 @@ export default function LoginPage() {
 
                     {/* Footer */}
                     <p className="mt-8 text-center text-xs text-slate-600">
-                        © 2024 GPSTek. All rights reserved.
+                        © 2026 GPSTek. All rights reserved.
                     </p>
                 </div>
             </div>
