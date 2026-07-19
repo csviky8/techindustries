@@ -410,7 +410,10 @@ function ViewDetail({ row: initialRow, rtos, onUpdated, editing, onSaveDone, sav
 }
 
 
-export default function FittedListPage() {
+export default function FittedListPage({
+    title = 'Fitted List',
+    subtitle = 'All fitted GPS devices',
+} = {}) {
     const [rows, setRows]           = useState([]);
     const [meta, setMeta]           = useState(null);
     const [loading, setLoading]     = useState(false);
@@ -491,10 +494,10 @@ export default function FittedListPage() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             <div>
                 <h1 style={{ margin: 0, fontSize: '1.4rem', fontWeight: 700, color: 'var(--text-primary)' }}>
-                    Fitted List
+                    {title}
                 </h1>
                 <p style={{ margin: '2px 0 0', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-                    All fitted GPS devices
+                    {subtitle}
                 </p>
             </div>
 
