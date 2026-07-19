@@ -37,6 +37,7 @@ export const router = createBrowserRouter([
                     // All roles
                     { path: '/authorization/deployed-device', element: <DeployedDevicePage /> },
                     { path: '/authorization/owner-change', element: <Placeholder title="Owner Change" /> },
+                    { path: '/authorization/rto-approved', element: <FittedListPage /> },
                     { path: '/authorization/approved-device', element: <FittedListPage /> },
                     { path: '/mining-devices', element: <Placeholder title="Mining Devices" /> },
                     { path: '/inventory-request/requested', element: <Placeholder title="Requested" /> },

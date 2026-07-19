@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { useLocation } from 'react-router-dom';
 import api from '../api/client';
 import Modal from '../components/Modal';
 import SearchSelect from '../components/SearchSelect';
@@ -410,6 +411,9 @@ function ViewDetail({ row: initialRow, rtos, onUpdated, editing, onSaveDone, sav
 
 
 export default function FittedListPage() {
+    const location = useLocation();
+    const isApprovedView = ['/authorization/approved-device', '/authorization/rto-approved'].includes(location.pathname);
+
     const [rows, setRows]           = useState([]);
     const [meta, setMeta]           = useState(null);
     const [loading, setLoading]     = useState(false);
@@ -418,7 +422,7 @@ export default function FittedListPage() {
 
     const [filters, setFilters] = useState({
         imei: '', manufacturer: '', vehicle_reg_no: '', owner_mobile: '',
-        rto_id: '', fitted_date: '', temp_cert: '', rto_approved: '',
+        rto_id: '', fitted_date: '', temp_cert: '', rto_approved: isApprovedView ? 'Approved' : '',
     });
 
     // View modal
@@ -440,14 +444,17 @@ export default function FittedListPage() {
     const fetchList = useCallback(async (f = filters) => {
         setLoading(true);
         try {
-            const params = Object.fromEntries(Object.entries(f).filter(([, v]) => v !== ''));
+            const params = Object.fromEntries(Object.entries({
+                ...f,
+                ...(isApprovedView ? { rto_approved: 'Approved' } : {}),
+            }).filter(([, v]) => v !== ''));
             const r = await api.get('/fitment/fitted-list', { params });
             setRows(r.data.data);
             setMeta(r.data.meta);
         } finally {
             setLoading(false);
         }
-    }, []);
+    }, [filters, isApprovedView]);
 
     useEffect(() => {
         fetchList();
@@ -463,7 +470,11 @@ export default function FittedListPage() {
 
     const handleFilter = () => fetchList(filters);
     const handleReset  = () => {
-        const empty = { imei: '', manufacturer: '', vehicle_reg_no: '', owner_mobile: '', rto_id: '', fitted_date: '', temp_cert: '', rto_approved: '' };
+        const empty = {
+            imei: '', manufacturer: '', vehicle_reg_no: '', owner_mobile: '',
+            rto_id: '', fitted_date: '', temp_cert: '',
+            rto_approved: isApprovedView ? 'Approved' : '',
+        };
         setFilters(empty);
         fetchList(empty);
     };
@@ -507,8 +518,12 @@ export default function FittedListPage() {
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             <div>
-                <h1 style={{ margin: 0, fontSize: '1.4rem', fontWeight: 700, color: 'var(--text-primary)' }}>Fitted List</h1>
-                <p style={{ margin: '2px 0 0', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>All fitted GPS devices</p>
+                <h1 style={{ margin: 0, fontSize: '1.4rem', fontWeight: 700, color: 'var(--text-primary)' }}>
+                    {isApprovedView ? 'RTO Approved List' : 'Fitted List'}
+                </h1>
+                <p style={{ margin: '2px 0 0', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                    {isApprovedView ? 'Only approved GPS fitments' : 'All fitted GPS devices'}
+                </p>
             </div>
 
             {/* Filters */}
@@ -559,15 +574,17 @@ export default function FittedListPage() {
                             <option value="no">Not Uploaded</option>
                         </select>
                     </div>
-                    <div>
-                        <div style={{ fontSize: '0.72rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 4 }}>RTO Approved</div>
-                        <select style={inp} value={filters.rto_approved} onChange={e => setF('rto_approved', e.target.value)}>
-                            <option value="">Select</option>
-                            <option value="Pending">Pending</option>
-                            <option value="Approved">Approved</option>
-                            <option value="Rejected">Rejected</option>
-                        </select>
-                    </div>
+                    {!isApprovedView && (
+                        <div>
+                            <div style={{ fontSize: '0.72rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 4 }}>RTO Approved</div>
+                            <select style={inp} value={filters.rto_approved} onChange={e => setF('rto_approved', e.target.value)}>
+                                <option value="">Select</option>
+                                <option value="Pending">Pending</option>
+                                <option value="Approved">Approved</option>
+                                <option value="Rejected">Rejected</option>
+                            </select>
+                        </div>
+                    )}
                     <div style={{ display: 'flex', gap: '8px' }}>
                         <button onClick={handleFilter} style={{
                             flex: 1, padding: '7px 0', borderRadius: '7px', border: 'none',
@@ -646,17 +663,19 @@ export default function FittedListPage() {
                                                 </span>
 
                                                 {/* RTO Approve */}
-                                                <button
-                                                    title={`RTO Approval: ${row.approved_status}`}
-                                                    onClick={() => openApproveModal(row)}
-                                                    style={iconBtn(
-                                                        row.approved_status === 'Approved' ? '#059669' :
-                                                        row.approved_status === 'Rejected' ? '#dc2626' : '#b45309'
-                                                    )}
-                                                >
-                                                    {row.approved_status === 'Approved' ? '✅' :
-                                                     row.approved_status === 'Rejected' ? '❌' : '🕐'}
-                                                </button>
+                                                {!isApprovedView && (
+                                                    <button
+                                                        title={`RTO Approval: ${row.approved_status}`}
+                                                        onClick={() => openApproveModal(row)}
+                                                        style={iconBtn(
+                                                            row.approved_status === 'Approved' ? '#059669' :
+                                                            row.approved_status === 'Rejected' ? '#dc2626' : '#b45309'
+                                                        )}
+                                                    >
+                                                        {row.approved_status === 'Approved' ? '✅' :
+                                                         row.approved_status === 'Rejected' ? '❌' : '🕐'}
+                                                    </button>
+                                                )}
 
                                                 {/* View */}
                                                 <button title="View" onClick={() => setViewModal(row)} style={iconBtn()}>👁</button>

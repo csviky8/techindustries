@@ -18,7 +18,8 @@ class MenuSeeder extends Seeder
             ['name' => 'Authorization',     'slug' => 'authorization',      'route' => null,                    'icon' => 'authorization', 'order' => 3, 'children' => [
                 ['name' => 'Deployed Device',   'slug' => 'authorization.deployed-device',  'route' => '/authorization/deployed-device',    'icon' => null, 'order' => 1],
                 ['name' => 'Owner Change',      'slug' => 'authorization.owner-change',     'route' => '/authorization/owner-change',        'icon' => null, 'order' => 2],
-                ['name' => 'Approved Device',   'slug' => 'authorization.approved-device',  'route' => '/authorization/approved-device',     'icon' => null, 'order' => 3],
+                ['name' => 'RTO Approved',      'slug' => 'authorization.rto-approved',     'route' => '/authorization/rto-approved',        'icon' => null, 'order' => 3],
+                ['name' => 'Approved Device',   'slug' => 'authorization.approved-device',  'route' => '/authorization/approved-device',     'icon' => null, 'order' => 4],
             ]],
             ['name' => 'Mining Devices',    'slug' => 'mining-devices',     'route' => '/mining-devices',       'icon' => 'mining',     'order' => 4, 'children' => []],
             ['name' => 'Inventory Request', 'slug' => 'inventory-request',  'route' => null,                    'icon' => 'inventory',  'order' => 5, 'children' => [
