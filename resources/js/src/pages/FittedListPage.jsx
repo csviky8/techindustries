@@ -90,6 +90,27 @@ const getFileBaseUrl = () => {
     }
 };
 
+const downloadRemoteFile = async (fileUrl, fileName) => {
+    const res = await fetch(fileUrl, {
+        credentials: 'include',
+        headers: { Accept: '*/*' },
+    });
+
+    if (!res.ok) {
+        throw new Error(`Download failed (${res.status})`);
+    }
+
+    const blob = await res.blob();
+    const objectUrl = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = objectUrl;
+    a.download = fileName || 'download';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(objectUrl);
+};
+
 function DocCard({ field, label, icon, accept, path: initialPath, gpsId, onUploaded }) {
     const [uploading, setUploading] = useState(false);
     const [path, setPath] = useState(initialPath);
@@ -118,7 +139,8 @@ function DocCard({ field, label, icon, accept, path: initialPath, gpsId, onUploa
     };
 
     const isImage = path && /\.(jpg|jpeg|png)$/i.test(path);
-    const fileUrl = path ? `${getFileBaseUrl()}/storage/${encodeURI(path)}` : null;
+    const fileUrl = path ? `${getFileBaseUrl()}/fitment-file?path=${encodeURIComponent(path)}` : null;
+    const fileName = path ? path.split('/').pop() : 'download';
     return (
         <div style={{
             border: '1px solid var(--card-border)', borderRadius: '10px',
@@ -175,7 +197,15 @@ function DocCard({ field, label, icon, accept, path: initialPath, gpsId, onUploa
                                 }}>👁 View</button>
                             <a
                                 href={fileUrl || undefined}
-                                download
+                                onClick={async (e) => {
+                                    e.preventDefault();
+                                    if (!fileUrl) return;
+                                    try {
+                                        await downloadRemoteFile(fileUrl, fileName);
+                                    } catch {
+                                        window.open(fileUrl, '_blank', 'noopener,noreferrer');
+                                    }
+                                }}
                                 style={{
                                     flex: 1, padding: '5px 0', borderRadius: '6px', fontSize: '0.72rem',
                                     fontWeight: 600, textAlign: 'center', textDecoration: 'none',

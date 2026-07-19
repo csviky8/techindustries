@@ -8,14 +8,20 @@ export function useBootstrapAuth() {
 
     useEffect(() => {
         if (!token) return;
-        // Already have user + menus cached, skip API call
-        if (user && menus?.length > 0) return;
 
+        let cancelled = false;
         Promise.all([getMe(), getMenus()])
             .then(([meRes, menusRes]) => {
+                if (cancelled) return;
                 setUser(meRes.data.data);
                 setMenus(menusRes);
             })
-            .catch(() => clearAuth());
-    }, [token]);
+            .catch(() => {
+                if (!cancelled) clearAuth();
+            });
+
+        return () => {
+            cancelled = true;
+        };
+    }, [token, setUser, setMenus, clearAuth]);
 }
