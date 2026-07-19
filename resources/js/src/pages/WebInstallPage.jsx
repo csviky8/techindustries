@@ -1,7 +1,21 @@
 import { useState, useEffect, useRef } from 'react';
 import api from '../api/client';
+import SearchSelect from '../components/SearchSelect';
 
 const DEPARTMENTS = ['Motor Vehicles Department', 'Mining Department'];
+
+const VEHICLE_TYPES = [
+    '5 Seater Motorcab',
+    '7 Seater Motorcab',
+    '8 Seater Maxicab',
+    '13 Seater Maxicab',
+    '21 Seater Bus',
+    '30+ Seater Bus',
+    '50+ Seater Bus',
+    'Goods Vehicle',
+    'Tractor',
+    'Car',
+];
 
 const Field = ({ label, required, children }) => (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
@@ -225,30 +239,36 @@ export default function WebInstallPage() {
                         </Field>
 
                         <Field label="Department" required>
-                            <select style={{ ...inp, borderColor: formErr.department ? '#ef4444' : undefined }}
-                                value={form.department} onChange={e => setForm(f => ({ ...f, department: e.target.value }))}>
-                                <option value="">Select Department</option>
-                                {DEPARTMENTS.map(d => <option key={d} value={d}>{d}</option>)}
-                            </select>
+                            <SearchSelect
+                                options={DEPARTMENTS.map(d => ({ value: d, label: d }))}
+                                value={form.department}
+                                onChange={v => setForm(f => ({ ...f, department: v }))}
+                                placeholder="Select Department"
+                                error={!!formErr.department}
+                            />
                             {formErr.department && <span style={{ fontSize: '0.72rem', color: '#ef4444' }}>{formErr.department}</span>}
                         </Field>
 
                         <Field label="RTO Zone" required>
-                            <select style={{ ...inp, borderColor: formErr.zone_id ? '#ef4444' : undefined }}
-                                value={form.zone_id} onChange={e => onZoneChange(e.target.value)}>
-                                <option value="">Select Zone</option>
-                                {zones.map(z => <option key={z.id} value={z.id}>{z.name}</option>)}
-                            </select>
+                            <SearchSelect
+                                options={zones.map(z => ({ value: z.id, label: z.name }))}
+                                value={form.zone_id}
+                                onChange={v => onZoneChange(v)}
+                                placeholder="Select Zone"
+                                error={!!formErr.zone_id}
+                            />
                             {formErr.zone_id && <span style={{ fontSize: '0.72rem', color: '#ef4444' }}>{formErr.zone_id}</span>}
                         </Field>
 
                         <Field label="RTO" required>
-                            <select style={{ ...inp, borderColor: formErr.rto_id ? '#ef4444' : undefined }}
-                                value={form.rto_id} onChange={e => setForm(f => ({ ...f, rto_id: e.target.value }))}
-                                disabled={!form.zone_id}>
-                                <option value="">Select RTO</option>
-                                {rtos.map(r => <option key={r.id} value={r.id}>{r.code} — {r.name}</option>)}
-                            </select>
+                            <SearchSelect
+                                options={rtos.map(r => ({ value: r.id, label: `${r.code} — ${r.name}` }))}
+                                value={form.rto_id}
+                                onChange={v => setForm(f => ({ ...f, rto_id: v }))}
+                                placeholder="Select RTO"
+                                disabled={!form.zone_id}
+                                error={!!formErr.rto_id}
+                            />
                             {formErr.rto_id && <span style={{ fontSize: '0.72rem', color: '#ef4444' }}>{formErr.rto_id}</span>}
                         </Field>
 
@@ -258,8 +278,12 @@ export default function WebInstallPage() {
                         </Field>
 
                         <Field label="Vehicle Type">
-                            <input style={inp} value={form.vehicle_type}
-                                onChange={e => setForm(f => ({ ...f, vehicle_type: e.target.value }))} />
+                            <SearchSelect
+                                options={VEHICLE_TYPES.map(t => ({ value: t, label: t }))}
+                                value={form.vehicle_type}
+                                onChange={v => setForm(f => ({ ...f, vehicle_type: v }))}
+                                placeholder="Select Vehicle Type"
+                            />
                         </Field>
 
                         <Field label="Chassis No">

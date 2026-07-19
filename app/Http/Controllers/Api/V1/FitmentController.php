@@ -11,6 +11,7 @@ use App\Models\VehicleDetail;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 
 class FitmentController extends Controller
 {
@@ -106,5 +107,124 @@ class FitmentController extends Controller
     {
         $vehicle = VehicleDetail::with(['zone', 'rtoModel', 'gps.device'])->findOrFail($vehicleId);
         return response()->json(['data' => $vehicle]);
+    }
+
+    public function fittedList(Request $request): JsonResponse
+    {
+        $q = GpsDeviceDetail::with(['vehicle.zone', 'vehicle.rtoModel', 'device'])
+            ->whereHas('vehicle');
+
+        if ($imei = $request->query('imei'))
+            $q->whereHas('device', fn($d) => $d->where('imei', 'like', "%{$imei}%"));
+
+        if ($manufacturer = $request->query('manufacturer'))
+            $q->whereHas('device', fn($d) => $d->where('manufacturer', $manufacturer));
+
+        if ($reg = $request->query('vehicle_reg_no'))
+            $q->whereHas('vehicle', fn($v) => $v->where('vehicle_reg_no', 'like', "%{$reg}%"));
+
+        if ($mobile = $request->query('owner_mobile'))
+            $q->whereHas('vehicle', fn($v) => $v->where('owner_mobile', 'like', "%{$mobile}%"));
+
+        if ($rto = $request->query('rto_id'))
+            $q->whereHas('vehicle', fn($v) => $v->where('rto_id', $rto));
+
+        if ($fitted = $request->query('fitted_date'))
+            $q->whereDate('fitted_date', $fitted);
+
+        if ($tempCert = $request->query('temp_cert'))
+            $q->where($tempCert === 'yes' ? fn($x) => $x->whereNotNull('temp_certificate_file') : fn($x) => $x->whereNull('temp_certificate_file'));
+
+        if ($rtoApproved = $request->query('rto_approved'))
+            $q->where('approved_status', $rtoApproved);
+
+        $data = $q->latest()->paginate(50);
+        return response()->json($data);
+    }
+
+    public function uploadTempCert(Request $request, GpsDeviceDetail $gps): JsonResponse
+    {
+        $request->validate(['file' => 'required|file|mimes:pdf,jpg,jpeg,png|max:5120']);
+        $path = $request->file('file')->store('temp-certs', 'public');
+        $gps->update([
+            'temp_certificate_file' => $path,
+            'temp_certificate_date' => now()->toDateString(),
+        ]);
+        return response()->json(['message' => 'Temp certificate uploaded.', 'path' => $path]);
+    }
+
+    public function uploadDoc(Request $request, GpsDeviceDetail $gps): JsonResponse
+    {
+        $allowed = ['rc_book_file', 'device_fitment_file', 'vehicle_image', 'temp_certificate_file'];
+        $request->validate([
+            'field' => 'required|in:' . implode(',', $allowed),
+            'file'  => 'required|file|mimes:pdf,jpg,jpeg,png|max:5120',
+        ]);
+        $field = $request->input('field');
+        $folder = match($field) {
+            'vehicle_image'       => 'vehicle-images',
+            'temp_certificate_file' => 'temp-certs',
+            default               => 'fitment-docs',
+        };
+        $path = $request->file('file')->store($folder, 'public');
+        $extra = $field === 'temp_certificate_file' ? ['temp_certificate_date' => now()->toDateString()] : [];
+        $gps->update(array_merge([$field => $path], $extra));
+        return response()->json(['message' => 'Uploaded.', 'gps' => $gps->fresh(['vehicle.zone', 'vehicle.rtoModel', 'device'])]);
+    }
+
+    public function updateFitment(Request $request, GpsDeviceDetail $gps): JsonResponse
+    {
+        $data = $request->validate([
+            'vehicle_reg_no'   => 'required|string|max:100',
+            'vehicle_reg_date' => 'required|date',
+            'rto_id'           => 'required|exists:rtos,id',
+            'vehicle_type'     => 'nullable|string|max:100',
+            'owner_name'       => 'required|string|max:150',
+            'owner_mobile'     => 'required|string|max:20',
+            'owner_address'    => 'nullable|string',
+            'rc_book_file'     => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:5120',
+            'device_fitment_file' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:5120',
+            'vehicle_image'    => 'nullable|file|mimes:jpg,jpeg,png|max:5120',
+        ]);
+
+        $rto = Rto::find($data['rto_id']);
+        $vehicle = $gps->vehicle;
+        $vehicle->update([
+            'vehicle_reg_no'   => $data['vehicle_reg_no'],
+            'vehicle_reg_date' => $data['vehicle_reg_date'],
+            'rto_id'           => $data['rto_id'],
+            'rto'              => $rto?->name,
+            'vehicle_type'     => $data['vehicle_type'] ?? $vehicle->vehicle_type,
+            'owner_name'       => $data['owner_name'],
+            'owner_mobile'     => $data['owner_mobile'],
+            'owner_address'    => $data['owner_address'] ?? $vehicle->owner_address,
+        ]);
+
+        $gpsUpdate = [];
+        foreach (['rc_book_file', 'device_fitment_file', 'vehicle_image'] as $field) {
+            if ($request->hasFile($field)) {
+                $gpsUpdate[$field] = $request->file($field)->store($field === 'vehicle_image' ? 'vehicle-images' : 'fitment-docs', 'public');
+            }
+        }
+        if ($gpsUpdate) $gps->update($gpsUpdate);
+
+        return response()->json([
+            'message' => 'Updated successfully.',
+            'gps' => $gps->fresh(['vehicle.zone', 'vehicle.rtoModel', 'device']),
+        ]);
+    }
+
+    public function rtoApprove(Request $request, GpsDeviceDetail $gps): JsonResponse
+    {
+        $data = $request->validate([
+            'approved_status' => 'required|in:Pending,Approved,Rejected',
+            'approval_notes'  => 'nullable|string|max:1000',
+        ]);
+        $gps->update([
+            'approved_status' => $data['approved_status'],
+            'approval_notes'  => $data['approval_notes'] ?? null,
+            'approved_by'     => Auth::id(),
+        ]);
+        return response()->json(['message' => 'RTO approval status updated.', 'gps' => $gps->fresh()]);
     }
 }

@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { createPortal } from 'react-dom';
 
-export default function Modal({ open, onClose, title, children, maxWidth = '520px' }) {
+export default function Modal({ open, onClose, title, headerActions, children, maxWidth = '520px' }) {
     useEffect(() => {
         if (!open) return;
         const handler = (e) => e.key === 'Escape' && onClose();
@@ -40,27 +40,39 @@ export default function Modal({ open, onClose, title, children, maxWidth = '520p
                 width: '100%',
                 maxWidth,
                 borderRadius: '16px',
-                padding: '24px',
                 background: 'var(--card-bg)',
                 border: '1px solid var(--card-border)',
                 boxShadow: '0 24px 80px rgba(0,0,0,0.3)',
                 maxHeight: '90vh',
-                overflowY: 'auto',
+                display: 'flex',
+                flexDirection: 'column',
                 animation: 'fadeSlideIn 0.2s ease both',
             }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '18px' }}>
+                {/* Sticky header */}
+                <div style={{
+                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                    padding: '18px 24px 14px',
+                    borderBottom: '1px solid var(--card-border)',
+                    flexShrink: 0,
+                }}>
                     <h2 id="modal-title" style={{ margin: 0, fontSize: '1.05rem', fontWeight: 700, color: 'var(--text-primary)' }}>
                         {title}
                     </h2>
-                    <button onClick={onClose} style={{
-                        width: '28px', height: '28px', borderRadius: '7px',
-                        border: '1px solid var(--card-border)', background: 'transparent',
-                        cursor: 'pointer', fontSize: '0.9rem', color: 'var(--text-secondary)',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        flexShrink: 0,
-                    }}>✕</button>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
+                        {headerActions}
+                        <button onClick={onClose} style={{
+                            width: '28px', height: '28px', borderRadius: '7px',
+                            border: '1px solid var(--card-border)', background: 'transparent',
+                            cursor: 'pointer', fontSize: '0.9rem', color: 'var(--text-secondary)',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            flexShrink: 0,
+                        }}>✕</button>
+                    </div>
                 </div>
-                {children}
+                {/* Scrollable body */}
+                <div style={{ overflowY: 'auto', padding: '20px 24px', flex: 1 }}>
+                    {children}
+                </div>
             </div>
         </div>,
         document.body

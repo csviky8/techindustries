@@ -28,6 +28,11 @@ Route::prefix('v1')->group(function () {
         Route::get('fitment/search', [FitmentController::class, 'searchDevice']);
         Route::post('fitment', [FitmentController::class, 'store']);
         Route::get('fitment/slip/{vehicle}', [FitmentController::class, 'slip']);
+        Route::get('fitment/fitted-list', [FitmentController::class, 'fittedList']);
+        Route::post('fitment/{gps}/temp-cert', [FitmentController::class, 'uploadTempCert']);
+        Route::post('fitment/{gps}/rto-approve', [FitmentController::class, 'rtoApprove']);
+        Route::post('fitment/{gps}/upload-doc', [FitmentController::class, 'uploadDoc']);
+        Route::post('fitment/{gps}/update', [FitmentController::class, 'updateFitment']);
         Route::get('rtos/zones', [RtoController::class, 'zones']);
 
         // Admin-only routes

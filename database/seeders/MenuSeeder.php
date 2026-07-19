@@ -39,7 +39,7 @@ class MenuSeeder extends Seeder
             ['name' => 'Activity Log',      'slug' => 'activity-log',       'route' => '/activity-log',         'icon' => 'activity',   'order' => 11, 'children' => []],
             ['name' => 'Fitment',           'slug' => 'fitment',            'route' => null,                    'icon' => 'fitment',    'order' => 12, 'children' => [
                 ['name' => 'Web Install',    'slug' => 'fitment.web-install', 'route' => '/fitment/web-install',  'icon' => null, 'order' => 1],
-                ['name' => 'Fitter List',    'slug' => 'fitment.fitter-list', 'route' => '/fitment/fitter-list',  'icon' => null, 'order' => 2],
+                ['name' => 'Fitted List',    'slug' => 'fitment.fitted-list', 'route' => '/fitment/fitted-list',  'icon' => null, 'order' => 2],
             ]],
         ];
 
