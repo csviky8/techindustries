@@ -21,6 +21,8 @@ Route::prefix('v1')->group(function () {
         Route::post('logout', [AuthController::class, 'logout']);
         Route::get('me', [AuthController::class, 'me']);
         Route::get('menus', [MenuController::class, 'index']);
+        Route::get('settings/devices', [DeviceSettingsController::class, 'index']);
+        Route::post('settings/devices', [DeviceSettingsController::class, 'store']);
         // Projects — all authenticated users
         Route::apiResource('projects', ProjectController::class);
 

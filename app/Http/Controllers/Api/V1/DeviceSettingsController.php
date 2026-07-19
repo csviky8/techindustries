@@ -12,6 +12,68 @@ use Maatwebsite\Excel\Facades\Excel;
 
 class DeviceSettingsController extends Controller
 {
+    public function index(Request $request): JsonResponse
+    {
+        $perPage = (int) $request->integer('per_page', 10);
+        $perPage = max(1, min($perPage, 50));
+        $search = trim((string) $request->input('search', ''));
+
+        $query = DeviceDetail::query()->orderByDesc('id');
+
+        if ($search !== '') {
+            $query->where(function ($q) use ($search) {
+                $q->where('imei', 'like', "%{$search}%")
+                    ->orWhere('serial_no', 'like', "%{$search}%")
+                    ->orWhere('part_no', 'like', "%{$search}%")
+                    ->orWhere('device_model', 'like', "%{$search}%")
+                    ->orWhere('manufacturer', 'like', "%{$search}%");
+            });
+        }
+
+        return response()->json($query->paginate($perPage)->withQueryString());
+    }
+
+    public function store(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'imei' => 'required|string|max:50|unique:device_details,imei',
+            'device_model' => 'nullable|string|max:150',
+            'part_no' => 'nullable|string|max:100',
+            'serial_no' => 'nullable|string|max:100',
+            'iccid_1' => 'nullable|string|max:50',
+            'iccid_2' => 'nullable|string|max:50',
+            'sim_1' => 'nullable|string|max:50',
+            'sim_2' => 'nullable|string|max:50',
+            'new_vehicle' => 'required|in:Yes,No',
+            'status' => 'sometimes|boolean',
+        ]);
+
+        $device = DeviceDetail::create([
+            'imei' => trim($data['imei']),
+            'device_model' => trim($data['device_model'] ?? ''),
+            'part_no' => trim($data['part_no'] ?? ''),
+            'serial_no' => trim($data['serial_no'] ?? ''),
+            'iccid_1' => trim($data['iccid_1'] ?? ''),
+            'iccid_2' => trim($data['iccid_2'] ?? ''),
+            'sim_1' => trim($data['sim_1'] ?? ''),
+            'sim_2' => trim($data['sim_2'] ?? ''),
+            'new_vehicle' => $data['new_vehicle'],
+            'status' => $request->boolean('status', true),
+        ]);
+
+        ActivityLog::record(
+            'Device Settings',
+            'create',
+            "Created device {$device->imei} manually",
+            ['device_id' => $device->id, 'imei' => $device->imei]
+        );
+
+        return response()->json([
+            'message' => 'Device saved successfully.',
+            'device' => $device->fresh(),
+        ], 201);
+    }
+
     public function import(Request $request): JsonResponse
     {
         $request->validate([

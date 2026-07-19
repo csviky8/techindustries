@@ -13,6 +13,7 @@ import SettingsPage from '../pages/SettingsPage';
 import DealerJurisdictionPage from '../pages/DealerJurisdictionPage';
 import WebInstallPage from '../pages/WebInstallPage';
 import FittedListPage from '../pages/FittedListPage';
+import DeployedDevicePage from '../pages/DeployedDevicePage';
 
 const Placeholder = ({ title }) => (
     <div className="animate-in">
@@ -34,7 +35,7 @@ export const router = createBrowserRouter([
                     { path: '/settings', element: <SettingsPage /> },
 
                     // All roles
-                    { path: '/authorization/deployed-device', element: <Placeholder title="Deployed Device" /> },
+                    { path: '/authorization/deployed-device', element: <DeployedDevicePage /> },
                     { path: '/authorization/owner-change', element: <Placeholder title="Owner Change" /> },
                     { path: '/authorization/approved-device', element: <FittedListPage /> },
                     { path: '/mining-devices', element: <Placeholder title="Mining Devices" /> },
