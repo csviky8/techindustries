@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\V1;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\UserResource;
 use App\Models\ActivityLog;
+use App\Models\Role;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -16,7 +17,9 @@ class UserController extends Controller
     {
         $user = $request->user();
 
-        $query = User::with('role', 'dealer');
+        $query = User::query()
+            ->select(['id', 'name', 'email', 'username', 'phone', 'state', 'district', 'address', 'dealer_name', 'is_approved', 'dealer_id', 'role_id', 'created_at'])
+            ->with(['role:id,name,slug', 'dealer:id,name,dealer_name']);
 
         if ($user->isDealer()) {
             $query->where('dealer_id', $user->id);
@@ -25,7 +28,8 @@ class UserController extends Controller
         }
 
         if ($request->filled('role')) {
-            $query->whereHas('role', fn($q) => $q->where('slug', $request->role));
+            $roleId = Role::where('slug', $request->role)->value('id');
+            $query->where('role_id', $roleId ?? 0);
         }
 
         if ($request->filled('search')) {
@@ -99,8 +103,12 @@ class UserController extends Controller
 
     public function dealers(Request $request): AnonymousResourceCollection
     {
-        $dealers = User::with('role')
-            ->whereHas('role', fn($q) => $q->where('slug', 'dealer'))
+        $dealerRoleId = Role::where('slug', 'dealer')->value('id');
+
+        $dealers = User::query()
+            ->select(['id', 'name', 'dealer_name', 'role_id', 'created_at'])
+            ->with('role:id,name,slug')
+            ->where('role_id', $dealerRoleId ?? 0)
             ->orderBy('name')
             ->get();
 
@@ -112,7 +120,12 @@ class UserController extends Controller
     private function installerQuery(Request $request)
     {
         $auth = $request->user();
-        $query = User::with('role')->whereHas('role', fn($q) => $q->where('slug', 'staff'));
+        $staffRoleId = Role::where('slug', 'staff')->value('id');
+
+        $query = User::query()
+            ->select(['id', 'name', 'email', 'phone', 'state', 'district', 'address', 'dealer_name', 'is_approved', 'dealer_id', 'role_id', 'created_at'])
+            ->with(['role:id,name,slug'])
+            ->where('role_id', $staffRoleId ?? 0);
 
         if ($auth->isDealer()) {
             $query->where('dealer_id', $auth->id);

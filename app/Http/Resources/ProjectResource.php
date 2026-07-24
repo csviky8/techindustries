@@ -16,7 +16,7 @@ class ProjectResource extends JsonResource
             'status' => $this->status,
             'due_date' => $this->due_date?->toDateString(),
             'owner' => new UserResource($this->whenLoaded('owner')),
-            'created_at' => $this->created_at->toISOString(),
+            'created_at' => optional($this->created_at)->toISOString(),
         ];
     }
 }

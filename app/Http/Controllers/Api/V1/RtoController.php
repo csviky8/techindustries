@@ -10,25 +10,30 @@ use App\Models\RtoZone;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Support\Facades\Cache;
 
 class RtoController extends Controller
 {
     public function zones(): JsonResponse
     {
-        $zones = RtoZone::with(['rtos' => fn($q) => $q->orderBy('code')])
-            ->where('is_active', true)
-            ->orderBy('name')
-            ->get()
-            ->map(fn($z) => [
-                'id'   => $z->id,
-                'name' => $z->name,
-                'rtos' => $z->rtos->map(fn($r) => [
-                    'id'        => $r->id,
-                    'name'      => $r->name,
-                    'code'      => $r->code,
-                    'is_active' => $r->is_active,
-                ]),
-            ]);
+        $zones = Cache::remember('app.rto.zones', now()->addMinutes(15), function () {
+            return RtoZone::query()
+                ->select(['id', 'name', 'is_active'])
+                ->with(['rtos' => fn($q) => $q->select(['id', 'name', 'code', 'is_active', 'zone_id'])->orderBy('code')])
+                ->where('is_active', true)
+                ->orderBy('name')
+                ->get()
+                ->map(fn($z) => [
+                    'id'   => $z->id,
+                    'name' => $z->name,
+                    'rtos' => $z->rtos->map(fn($r) => [
+                        'id'        => $r->id,
+                        'name'      => $r->name,
+                        'code'      => $r->code,
+                        'is_active' => $r->is_active,
+                    ]),
+                ]);
+        });
 
         return response()->json(['data' => $zones]);
     }
@@ -65,6 +70,7 @@ class RtoController extends Controller
         ]);
 
         $rto = Rto::create($data);
+        Cache::forget('app.rto.zones');
         ActivityLog::record('RTOs', 'create', "Created RTO: {$rto->name} ({$rto->code})", ['id' => $rto->id]);
         return response()->json(['data' => new RtoResource($rto)], 201);
     }
@@ -78,6 +84,7 @@ class RtoController extends Controller
         ]);
 
         $rto->update($data);
+        Cache::forget('app.rto.zones');
         ActivityLog::record('RTOs', 'update', "Updated RTO: {$rto->name} ({$rto->code})", ['id' => $rto->id]);
         return response()->json(['data' => new RtoResource($rto)]);
     }
@@ -85,6 +92,7 @@ class RtoController extends Controller
     public function destroy(Rto $rto): JsonResponse
     {
         $rto->delete();
+        Cache::forget('app.rto.zones');
         ActivityLog::record('RTOs', 'delete', "Deleted RTO: {$rto->name} ({$rto->code})", ['id' => $rto->id]);
         return response()->json(['message' => 'RTO deleted.']);
     }

@@ -11,7 +11,10 @@ class ActivityLogController extends Controller
 {
     public function index(Request $request): AnonymousResourceCollection
     {
-        $query = ActivityLog::with('user')->latest();
+        $query = ActivityLog::query()
+            ->select(['id', 'user_id', 'module', 'action', 'description', 'meta', 'ip', 'created_at'])
+            ->with(['user:id,name'])
+            ->latest();
 
         if ($request->filled('module')) {
             $query->where('module', $request->module);

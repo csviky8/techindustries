@@ -23,7 +23,7 @@ class UserResource extends JsonResource
             'dealer_id'   => $this->dealer_id,
             'dealer'      => new UserResource($this->whenLoaded('dealer')),
             'role'        => new RoleResource($this->whenLoaded('role')),
-            'created_at'  => $this->created_at->toISOString(),
+            'created_at'  => optional($this->created_at)->toISOString(),
         ];
     }
 }
