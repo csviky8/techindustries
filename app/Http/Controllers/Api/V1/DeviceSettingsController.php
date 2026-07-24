@@ -18,7 +18,9 @@ class DeviceSettingsController extends Controller
         $perPage = max(1, min($perPage, 50));
         $search = trim((string) $request->input('search', ''));
 
-        $query = DeviceDetail::query()->orderByDesc('id');
+        $query = DeviceDetail::query()
+            ->select(['id', 'imei', 'device_model', 'part_no', 'serial_no', 'iccid_1', 'iccid_2', 'sim_1', 'sim_2', 'new_vehicle', 'status', 'created_at'])
+            ->orderByDesc('id');
 
         if ($search !== '') {
             $query->where(function ($q) use ($search) {
@@ -103,16 +105,12 @@ class DeviceSettingsController extends Controller
     {
         $path = storage_path('app/templates/device_import_template.xlsx');
 
-        if (!file_exists($path)) {
-            // Generate a simple CSV template on the fly
-            $csv = "MODEL,PART NO,SERIAL NO,IMEI NO,ICCID NO1,ICCID NO2,SIM1,SIM2,NEW VEHICLE YES/NO\n";
-            $csv .= "GT06N,PT-001,SN-001,123456789012345,89914503012345678901,89914503012345678902,9876543210,9876543211,No\n";
-            return response($csv, 200, [
-                'Content-Type'        => 'text/csv',
-                'Content-Disposition' => 'attachment; filename="device_import_template.csv"',
-            ]);
+        if (file_exists($path)) {
+            return response()->download($path, 'device_import_template.xlsx');
         }
 
-        return response()->download($path, 'device_import_template.xlsx');
+        return response()->json([
+            'message' => 'Excel template not found.',
+        ], 404);
     }
 }
